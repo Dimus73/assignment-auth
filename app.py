@@ -114,10 +114,10 @@ def refresh():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-    tokens = create_tokens(token_data['id'], token_data['email'])
+    tokens = create_tokens(token_data['id'], token_data['sub'])
     save_refresh_token(token_data['id'], tokens['refresh_token'])
 
-    response = jsonify({"email": token_data['email'], "access_token": tokens['access_token']})
+    response = jsonify({"email": token_data['sub'], "access_token": tokens['access_token']})
     response.set_cookie('refresh_token', tokens['refresh_token'], httponly=True, max_age=30*24*60*60)
     return response, 200
 
