@@ -5,8 +5,10 @@ from decouple import config
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, decode_token
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, decode_token, jwt_required
 from werkzeug.security import generate_password_hash, check_password_hash
+from email_validator import validate_email, EmailNotValidError
+from password_strength import PasswordPolicy
 
 
 app = Flask(__name__)
@@ -51,6 +53,15 @@ class Token(db.Model):
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
+
+    email_check = email_validation(data['email']);
+    if not email_check['status']:
+        return jsonify({'message': email_check['Msg']}), 400
+
+    password_check = pw_validation(data['password'])
+    if not password_check['status']:
+        return jsonify({'message': password_check['Msg']}), 400
+
     candidate = User.query.filter_by(email=data['email']).first()
     # print('Candidate', candidate)
     if candidate:
@@ -90,29 +101,20 @@ def sign_out():
 
 @app.route('/refresh', methods=['get'])
 def refresh():
-    print('vvvvv1')
     refresh_token = request.cookies.get('refresh_token')
-    print(refresh_token)
     if not refresh_token:
         return jsonify({"message": "Invalid credentials!"}), 401
-    print('-------------')
-    # token_data = decode_token(refresh_token)
-    # try:
-    #     print('vvvvv2')
-    #     token_data = decode_token(refresh_token)
-    #     print(token_data)
-    # except Exception as e:
-    #     print('********')
-    #     return jsonify({"message": "Invalid credentials!"}), 401
     try:
         token_data = pyjwt.decode(refresh_token, config('SECRET_KEY'), algorithms=["HS256"])
-        print('?????????????', token_data)
     except pyjwt.ExpiredSignatureError:
         print("Token has expired!")
+        return jsonify({"message": "Invalid credentials!"}), 401
     except pyjwt.DecodeError:
         print("Token is invalid!")
+        return jsonify({"message": "Invalid credentials!"}), 401
     except Exception as e:
         print(f"An error occurred: {e}")
+        return jsonify({"message": "Invalid credentials!"}), 401
 
     tokens = create_tokens(token_data['id'], token_data['sub'])
     save_refresh_token(token_data['id'], tokens['refresh_token'])
@@ -120,6 +122,20 @@ def refresh():
     response = jsonify({"email": token_data['sub'], "access_token": tokens['access_token']})
     response.set_cookie('refresh_token', tokens['refresh_token'], httponly=True, max_age=30*24*60*60)
     return response, 200
+
+@app.route('/users', methods=['get'])
+@jwt_required()
+def users():
+    user_list = [];
+    all_users = User.query.all()
+    print(all_users, {'id':all_users[0].id, 'email':all_users[0].email})
+    for user in all_users:
+        user_list.append( {'id': user.id, 'email': user.email} )
+    return jsonify(user_list), 200
+
+
+
+##-----------------------------
 
 
 ##--------------------------
@@ -151,20 +167,34 @@ def remove_refresh_token(token):
         db.session.commit()
 
 
-# def refresh_tokens(refresh_token):
-#     try:
-#         token_data = decode_token(refresh_token)
-#     except Exception as e:
-#         return jsonify({"message": "Invalid credentials!"}), 401
-#
-#     db_token = Token.query.filter_by(refresh_token=refresh_token).first()
-#
-#     if db_token:
-#         new_tokens = create_tokens()
-#         save_refresh_token(token_data['id'], new_tokens['refresh_token'])
-#         return new_tokens
-#
-#     return
+def pw_validation(pw):
+    policy = PasswordPolicy.from_names(
+        # For debug mode only
+        length=3,
+        # This is for production mode. This or something similar
+        # length=8,
+        # uppercase=2,
+        # numbers=2,
+        # nonletters=2,
+    )
+    res = policy.test(pw)
+    if len(res) == 0:
+        return {'status': True}
+    message = f"Password does not meet security requirements: {', '.join(str(m) for m in res)}"
+    print('pw_validation=>', message)
+    return {'status': False, 'Msg': message}
+
+
+def email_validation(email):
+    try:
+        v = validate_email(email)
+        email = v["email"]
+        print('EMAIL =>', email)
+        return {'status': True, 'email': email}
+    except EmailNotValidError as e:
+        print('EMAIL DDDDDDDD=>', str(e))
+        return {'status': False, 'Msg': str(e)}
+
 
 if __name__ == '__main__':
     app.run()
