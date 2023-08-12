@@ -6,6 +6,8 @@ class User(db.Model):
     email = db.Column(db.String(80), unique=True, nullable=False)  # Changed from username to email
     password = db.Column(db.String(256), nullable=False)
     token = db.relationship('Token', backref='user', lazy=True)
+    company = db.relationship('Company', backref='owner', lazy=True)
+    member = db.relationship('Company', backref='member', lazy=True)
 
 
 class Token(db.Model):

@@ -90,7 +90,7 @@ def refresh():
 def users():
     user_list = [];
     all_users = User.query.all()
-    print(all_users, {'id':all_users[0].id, 'email':all_users[0].email})
+    print(all_users, {'id': all_users[0].id, 'email': all_users[0].email})
     for user in all_users:
         user_list.append( {'id': user.id, 'email': user.email} )
     return jsonify(user_list), 200

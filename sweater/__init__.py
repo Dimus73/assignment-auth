@@ -22,8 +22,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{username}:{password}@{ur
 app.config['JWT_SECRET_KEY'] = config('SECRET_KEY')
 
 # Set lifetime of ACCESS and REFRESH token
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=1)
-app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(minutes=30)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=60)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(minutes=3000)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_RECORD_QUERIES'] = True
@@ -32,5 +32,9 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
 from sweater.models import auth_model
+from sweater.models import company_model
+
 from sweater.routes import auth_routes
+from sweater.routes import company_routes
+
 from sweater.utils import auth_utils
