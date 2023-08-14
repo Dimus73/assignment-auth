@@ -6,11 +6,15 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 
+
 app = Flask(__name__)
 app.debug = True
 
-resources = {r"/*": {"origins": "http://localhostt:3000"}}
-CORS(app, resources=resources)
+# resources = {r"/*": {"origins": "http://localhostt:3000"}}
+# CORS(app, resources=resources)
+# CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=["https://localhost:3000"], supports_credentials=True)
+# CORS(app)
 
 url = config('DB_URL')
 port = config('DB_PORT')

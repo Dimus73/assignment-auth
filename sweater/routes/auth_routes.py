@@ -25,7 +25,7 @@ def signup():
     if is_email_in_db(data['email']):
         return jsonify({'message': 'A user with the same email already exists in the database'}), 409
 
-    create_new_user (data['email'], data['password'])
+    create_new_user(data['email'], data['password'])
     # print('**********', new_user)
     return jsonify({"message": "User created!"}), 201
 
@@ -41,8 +41,8 @@ def signin():
     tokens = create_tokens(user.id, user.email)
     save_refresh_token(user.id, tokens['refresh_token'])
 
-    response = jsonify({"email": user.email, "access_token": tokens['access_token']})
-    response.set_cookie('refresh_token', tokens['refresh_token'], httponly=True, max_age=30*24*60*60)
+    response = jsonify({'id': user.id, "email": user.email, "access_token": tokens['access_token']})
+    response.set_cookie('refresh_token', tokens['refresh_token'], samesite='None', secure=True, httponly=True, max_age=30*24*60*60)
     return response, 200
 
 
@@ -53,7 +53,7 @@ def sign_out():
     remove_refresh_token(refresh_token)
 
     response = jsonify({"message": "User log out"})
-    response.delete_cookie('refresh_token')
+    response.delete_cookie('refresh_token', samesite='None', secure=True)
     return response, 200
 
 

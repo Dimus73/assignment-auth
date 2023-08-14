@@ -37,7 +37,9 @@ def save_refresh_token(user_id, token):
 
 
 def remove_refresh_token(token):
+    print('******** token in=>', token)
     db_token = Token.query.filter_by(refresh_token=token).first()
+    print('******** token object=>', db_token)
     if db_token:
         db.session.delete(db_token)
         db.session.commit()
@@ -47,6 +49,7 @@ def pw_validation(pw):
     policy = PasswordPolicy.from_names(
         # For debug mode only
         length=3,
+
         # This is for production mode. This or something similar
         # length=8,
         # uppercase=2,
