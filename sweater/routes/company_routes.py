@@ -28,35 +28,37 @@ def create_org():
     # token_data = pyjwt.decode(token, config('SECRET_KEY'), algorithms=["HS256"])
 
     if not user_id or not company:
-        return jsonify({'message': "Server received invalid data"}), 400
+        return jsonify({'msg': "Server received invalid data"}), 400
 
     if not is_id_in_model(user_id, User):
-        return jsonify({'message': "User with this id is not registered"}), 400
+        return jsonify({'msg': "User with this id is not registered"}), 400
 
     if len(company.replace(" ", "")) == 0:
-        return jsonify({'message': "Company name cannot be an empty string"}), 400
+        return jsonify({'msg': "Company name cannot be an empty string"}), 400
 
     if is_company_in_db(user_id, company):
-        return jsonify({'message': "This user has already registered a company with that name. All company names for "
+        return jsonify({'msg': "This user has already registered a company with that name. All company names for "
                                    "one user must be unique."}), 400
-    create_company(user_id, company)
-    return jsonify({"message": "Company created!"}), 201
+    org_list = create_company(user_id, company)
+
+    response = jsonify(org_list)
+    return response, 200
 
 
 @app.route('/owner-org-list', methods=['POST'])
 @jwt_required()
 def owner_org_list():
     if not request.get_data():
-        return jsonify({'message': "Server did not receive expected data"}), 400
+        return jsonify({'msg': "Server did not receive expected data"}), 400
     data = request.get_json()
     print (f"This is data ____ {data} ___")
 
     user_id = data.get('user_id', False)
     if not user_id:
-        return jsonify({'message': "Server received invalid data"}), 400
+        return jsonify({'msg': "Server received invalid data"}), 400
 
     if not is_id_in_model(user_id, User):
-        return jsonify({'message': "User with this ID is not registered"}), 400
+        return jsonify({'msg': "User with this ID is not registered"}), 400
 
     org_list = get_owner_org_list(user_id)
 
@@ -68,7 +70,7 @@ def owner_org_list():
 @jwt_required()
 def add_user_to_org():
     if not request.get_data():
-        return jsonify({'message': "Server did not receive expected data"}), 400
+        return jsonify({'msg': "Server did not receive expected data"}), 400
 
     data = request.get_json()
 
@@ -76,35 +78,39 @@ def add_user_to_org():
     company_id = data.get('company_id', False)
 
     if not user_id or not company_id:
-        return jsonify({'message': "Server received invalid data"}), 400
+        return jsonify({'msg': "Server received invalid data"}), 400
 
     if not is_id_in_model(user_id, User):
-        return jsonify({'message': "User with this ID is not registered"}), 400
+        return jsonify({'msg': "User with this ID is not registered"}), 400
 
     if not is_id_in_model(company_id, Company):
-        return jsonify({'message': "Company with this ID is not registered"}), 400
+        return jsonify({'msg': "Company with this ID is not registered"}), 400
 
     if is_user_in_company(user_id, company_id):
-        return jsonify({'message': "The user has already been added to this company. Re-adding is not possible"}), 400
+        return jsonify({'msg': "The user has already been added to this company. Re-adding is not possible"}), 400
 
     add_user_to_company(user_id, company_id)
-    return jsonify({"message": "User added successfully!"}), 201
+
+    user_list = get_users_in_org(company_id)
+
+    response = jsonify(user_list)
+    return response, 200
 
 
 @app.route('/users-in-org', methods=['POST'])
 @jwt_required()
 def users_in_org():
     if not request.get_data():
-        return jsonify({'message': "Server did not receive expected data"}), 400
+        return jsonify({'msg': "Server did not receive expected data"}), 400
 
     data = request.get_json()
 
     company_id = data.get('company_id', False)
     if not company_id:
-        return jsonify({'message': "Server received invalid data"}), 400
+        return jsonify({'msg': "Server received invalid data"}), 400
 
     if not is_id_in_model(company_id, Company):
-        return jsonify({'message': "Company with this ID is not registered"}), 400
+        return jsonify({'msg': "Company with this ID is not registered"}), 400
 
     user_list = get_users_in_org(company_id)
 

@@ -1,11 +1,11 @@
 from datetime import timedelta
 
 from decouple import config
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-
+from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 app.debug = True
@@ -26,14 +26,20 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{username}:{password}@{ur
 app.config['JWT_SECRET_KEY'] = config('SECRET_KEY')
 
 # Set lifetime of ACCESS and REFRESH token
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=60)
-app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(minutes=3000)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=60*60)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(seconds=60*60*24*30)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_RECORD_QUERIES'] = True
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+
+
+@app.errorhandler(SQLAlchemyError)
+def handle_sqlalchemy_error(e):
+
+    return jsonify({'msg': "Data Base conaction error"}), 500
 
 from sweater.models import auth_model
 from sweater.models import company_model

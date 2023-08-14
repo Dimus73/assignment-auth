@@ -7,10 +7,11 @@ def is_company_in_db(user_id, company):
     return True if candidate else False
 
 
-def create_company (user_id, company):
+def create_company(user_id, company):
     new_company = Company(owner_id=user_id, name=company)
     db.session.add(new_company)
     db.session.commit()
+    return get_owner_org_list(user_id)
 
 
 def is_user_in_company (user_id, company_id):
@@ -26,8 +27,8 @@ def add_user_to_company(user_id, company_id):
 
 
 def get_owner_org_list(user_id):
-    org_list_obj = Company.query.filter_by(owner_id=user_id)
-    org_list = [org.name for org in org_list_obj]
+    org_list_obj = Company.query.filter_by(owner_id=user_id).order_by(Company.name).all()
+    org_list = [{'id': org.id, 'company':org.name} for org in org_list_obj]
     return org_list
 
 

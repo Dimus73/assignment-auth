@@ -36,10 +36,17 @@ def save_refresh_token(user_id, token):
     db.session.commit()
 
 
-def remove_refresh_token(token):
-    print('******** token in=>', token)
+def is_token_in_db(token):
+    # print('******** token in=>', token)
     db_token = Token.query.filter_by(refresh_token=token).first()
-    print('******** token object=>', db_token)
+    # print('******** token object=>', db_token)
+    return True if db_token else False
+
+
+def remove_refresh_token(token):
+    # print('******** Remove token in=>', token)
+    db_token = Token.query.filter_by(refresh_token=token).first()
+    # print('******** Remove token object=>', db_token)
     if db_token:
         db.session.delete(db_token)
         db.session.commit()
